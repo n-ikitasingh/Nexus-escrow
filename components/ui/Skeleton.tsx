@@ -27,7 +27,7 @@ export function SkeletonAvatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
 }
 
 // ---------------------------------------------------------------------------
-// Text skeleton
+// Text skeleton (FIXED: removed style prop, using plain div)
 // ---------------------------------------------------------------------------
 
 export function SkeletonText({
@@ -40,10 +40,10 @@ export function SkeletonText({
   return (
     <div className="flex flex-col gap-2 w-full">
       {Array.from({ length: lines }).map((_, i) => (
-        <Shimmer
+        <div
           key={i}
-          className="h-3.5"
-          style={{ width: i === lines - 1 && lines > 1 ? lastLineWidth : "100%" } as React.CSSProperties}
+          className="h-3.5 animate-pulse rounded-md bg-[rgb(var(--surface-2))]"
+          style={{ width: i === lines - 1 && lines > 1 ? lastLineWidth : "100%" }}
         />
       ))}
     </div>
