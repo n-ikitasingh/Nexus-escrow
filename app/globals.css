@@ -1,26 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+--bg-from: #f6fbfd;
+--bg-mid:  #f0fdfa;
+--bg-to:   #ecfeff;
+
+  --surface:       rgba(255,255,255,0.75);
+  --surface-solid: rgba(255,255,255,0.85);
+  --surface-hover: rgba(255,255,255,0.9);
+  --border:        rgba(120,100,200,0.12);
+  --border-strong: rgba(120,100,200,0.22);
+
+  --text-1: #1a1040;
+  --text-2: #5a4f7a;
+  --text-3: #9b8fba;
+
+--accent:   #06b6d4; /* cyan */
+--accent-2: #22d3ee;
+--accent-3: #14b8a6;
+--glow:     rgba(6,182,212,0.18);
+
+  --sidebar-w: 256px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+--bg-from: #020617;
+--bg-mid:  #031525;
+--bg-to:   #02121a;
+
+  --surface:       rgba(255,255,255,0.04);
+  --surface-solid: rgba(15,23,42,0.75);
+  --surface-hover: rgba(255,255,255,0.07);
+  --border:        rgba(180,150,255,0.1);
+  --border-strong: rgba(180,150,255,0.2);
+
+  --text-1: #f0ecff;
+  --text-2: #b8a8e0;
+  --text-3: #6b5d8f;
+
+--accent:   #22d3ee;
+--accent-2: #67e8f9;
+--accent-3: #2dd4bf;
+--glow:     rgba(34,211,238,0.25);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--bg-from);
+  color: var(--text-1);
+  min-height: 100vh;
+}
+
+/* ── Animated mesh background ── */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,  var(--bg-from) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 80% 90%,  var(--bg-mid)  0%, transparent 70%),
+    radial-gradient(ellipse 70% 50% at 60% 40%,  var(--bg-to)   0%, transparent 70%);
+  background-color: var(--bg-from);
+  animation: meshShift 14s ease-in-out infinite alternate;
+}
+
+@keyframes meshShift {
+  0%   { background-position: 0% 0%,   100% 100%, 50% 50%; }
+  33%  { background-position: 30% 20%,  70%  80%,  20% 60%; }
+  66%  { background-position: 60% 40%,  40%  60%,  80% 20%; }
+  100% { background-position: 20% 80%,  80%  20%,  40% 70%; }
+}
+
+/* Blob orbs */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+.dark .orb { opacity: 0.2; }
+
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #a78bfa, #7c3aed);
+  top: -100px; left: -100px;
+  animation-delay: 0s;
+}
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #f472b6, #ec4899);
+  bottom: -80px; right: -80px;
+  animation-delay: -7s;
+}
+.orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, #60a5fa, #3b82f6);
+  top: 40%; left: 50%;
+  animation-delay: -14s;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0,    0)    scale(1);    }
+  33%       { transform: translate(40px, -30px) scale(1.05); }
+  66%       { transform: translate(-30px, 40px) scale(0.95); }
+}
+
+/* ── Glass surface ── */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+}
+.glass-solid {
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+/* ── Font mono ── */
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Glow effects ── */
+.glow-accent {
+  box-shadow: 0 0 24px var(--glow), 0 4px 16px rgba(0,0,0,0.08);
 }
