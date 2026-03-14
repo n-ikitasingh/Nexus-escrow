@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -8,10 +8,24 @@ interface PageTransitionProps {
   children: ReactNode;
 }
 
-const variants = {
-  hidden:  { opacity: 0, y: 10 },
-  enter:   { opacity: 1, y: 0,  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } },
-  exit:    { opacity: 0, y: -6, transition: { duration: 0.18, ease: "easeIn" } },
+const variants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  enter: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.28,
+      ease: [0.22, 1, 0.36, 1] as const, // tuple now
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -6,
+    transition: {
+      duration: 0.18,
+      ease: "easeIn",
+    },
+  },
 };
 
 export function PageTransition({ children }: PageTransitionProps) {
