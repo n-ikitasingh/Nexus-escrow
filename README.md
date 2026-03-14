@@ -59,3 +59,54 @@ This removes the "trust gap", manual oversight, and payment delays that plague t
    ```bash
    git clone https://github.com/yourusername/nexus-escrow.git
    cd nexus-escrow
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env.local` file in the root with your keys:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   GROQ_API_KEY=your_groq_api_key
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) to see the app.
+
+### Database Setup
+The required SQL schema is included in the repository (see `schema.sql`). Run it in your Supabase SQL editor to create tables, enable RLS, and set up the profile trigger.
+
+---
+
+## Testing the Flow
+
+1. **Sign up as an employer** – create a project, let AI generate milestones, fund it.
+2. **Sign up as a freelancer** – accept the project, submit work, watch AI evaluation and payment release.
+3. **Check PFI updates** – visit the profile page to see reputation changes.
+
+A guest demo page is also available at `/demo` with simulated data.
+
+---
+
+## Problem Statement Addressed
+
+This project was built for the **BitByBit 36‑Hour Fullstack Hackathon** at IIT Roorkee. It directly solves the challenge of **manual intermediation in freelancing** by providing an autonomous AI agent that handles project scoping, escrow, quality assurance, and reputation scoring. The core pillars – intelligent requirement analysis, automated escrow, AI quality assurance, and PFI – are fully implemented.
+
+---
+
+## Acknowledgements
+
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.com/)
+- [Groq](https://groq.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [Netlify](https://www.netlify.com/)
+
