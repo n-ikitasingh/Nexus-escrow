@@ -157,9 +157,13 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Link href="/login">
-              <span className="hidden sm:inline text-xs font-semibold transition-opacity hover:opacity-70" style={{ color: "var(--text-2)" }}>
+              <motion.button
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                className="hidden sm:inline-flex items-center rounded-lg px-4 py-1.5 text-xs font-bold border transition-colors"
+                style={{ background: "var(--surface)", borderColor: "var(--border-strong)", color: "var(--text-1)" }}
+              >
                 Sign in
-              </span>
+              </motion.button>
             </Link>
             <Link href="/signup">
               <motion.button
