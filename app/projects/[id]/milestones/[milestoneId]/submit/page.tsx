@@ -1,4 +1,5 @@
 // PATH: app/projects/[id]/milestones/[milestoneId]/submit/page.tsx
+// CRITICAL FIX: folder must be [milestoneId] with brackets, not milestoneId
 "use client";
 
 import { useEffect, useState } from "react";
@@ -81,74 +82,45 @@ export default function MilestoneSubmitPage() {
 
     setSubmitting(true);
     try {
-      // ── Step 1: Mark as submitted in DB immediately ──────────────────────
-      await supabase.from("milestones").update({
-        status:          "submitted",
-        submission_text: submission.trim(),
-        submitted_at:    new Date().toISOString(),
-      }).eq("id", milestoneId);
+      // ── Step 1: Call the API route (uses server-side GROQ_API_KEY) ────────
+      // The API route handles Groq evaluation — never call Groq from the browser
+      const res = await fetch(`/api/milestones/${milestoneId}/submit`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          milestoneTitle:       milestone.title,
+          milestoneDescription: milestone.description,
+          submission:           submission.trim(),
+        }),
+      });
 
-      // ── Step 2: Groq AI evaluation — called directly, no API route needed ──
-      let eval_result: Evaluation = {
-        score: 0, approved: false, feedback: "", suggestion: "",
-      };
-
-      try {
-        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type":  "application/json",
-            "Authorization": `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model:      "llama-3.3-70b-versatile",
-            max_tokens: 400,
-            messages: [
-              {
-                role: "system",
-                content: `You are an AI QA agent for a freelance escrow platform. Evaluate the freelancer submission against the milestone. Reply ONLY with this exact JSON, no markdown:
-{"score":<0-100>,"approved":<true if score>=70>,"feedback":"<2 sentences>","suggestion":"<one fix if rejected, else empty string>"}`,
-              },
-              {
-                role: "user",
-                content: `Milestone: ${milestone.title}\nRequirements: ${milestone.description}\nSubmission: ${submission.trim()}`,
-              },
-            ],
-          }),
-        });
-
-        const groqData = await groqRes.json();
-        const text     = groqData.choices?.[0]?.message?.content ?? "{}";
-        const parsed   = JSON.parse(text.replace(/```json|```/g, "").trim());
-        eval_result    = {
-          score:      Number(parsed.score ?? 0),
-          approved:   Boolean(parsed.approved ?? Number(parsed.score ?? 0) >= 70),
-          feedback:   String(parsed.feedback   ?? "Evaluation complete."),
-          suggestion: String(parsed.suggestion ?? ""),
-        };
-      } catch (aiErr) {
-        console.warn("Groq fallback:", aiErr);
-        const words  = submission.trim().split(/\s+/).length;
-        eval_result  = {
-          score:      words > 40 ? 78 : 38,
-          approved:   words > 40,
-          feedback:   words > 40
-            ? "Submission is detailed and meets basic criteria. Approved."
-            : "Submission is too brief to fully evaluate.",
-          suggestion: words <= 40 ? "Describe what you built, how it works, and include any links." : "",
-        };
+      // Check content type before parsing
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("API route returned HTML — check that /api/milestones/[id]/submit/route.ts exists");
       }
 
-      // ── Step 3: Update milestone with final evaluation ───────────────────
+      const evalData = await res.json();
+      if (!res.ok) throw new Error(evalData.error ?? "Evaluation failed");
+
+      const eval_result: Evaluation = {
+        score:      evalData.score      ?? 0,
+        approved:   evalData.approved   ?? false,
+        feedback:   evalData.feedback   ?? "Evaluation complete.",
+        suggestion: evalData.suggestion ?? "",
+      };
+
+      // ── Step 2: Update milestone status in DB ─────────────────────────────
       await supabase.from("milestones").update({
         status:              eval_result.approved ? "approved" : "rejected",
+        submission_text:     submission.trim(),
         evaluation_feedback: eval_result.feedback,
+        submitted_at:        new Date().toISOString(),
         evaluated_at:        new Date().toISOString(),
       }).eq("id", milestoneId);
 
-      // ── Step 4: If approved, release payment ─────────────────────────────
+      // ── Step 3: If approved, release payment + update PFI ─────────────────
       if (eval_result.approved) {
-        // Get project escrow balance
         const { data: proj } = await supabase
           .from("projects")
           .select("escrow_balance, freelancer_id")
@@ -156,12 +128,10 @@ export default function MilestoneSubmitPage() {
           .single();
 
         if (proj) {
-          // Decrement escrow
           await supabase.from("projects").update({
             escrow_balance: Math.max(0, (proj.escrow_balance ?? 0) - milestone.amount),
           }).eq("id", projectId);
 
-          // Record transaction
           await supabase.from("transactions").insert({
             project_id: Number(projectId),
             amount:     milestone.amount,
@@ -169,27 +139,26 @@ export default function MilestoneSubmitPage() {
             status:     "completed",
           });
 
-          // +5 PFI for freelancer
           if (proj.freelancer_id) {
-            const { data: profile } = await supabase
+            const { data: pf } = await supabase
               .from("profiles").select("pfi").eq("id", proj.freelancer_id).single();
-            if (profile) {
+            if (pf) {
               await supabase.from("profiles")
-                .update({ pfi: (profile.pfi ?? 0) + 5 })
+                .update({ pfi: (pf.pfi ?? 0) + 5 })
                 .eq("id", proj.freelancer_id);
             }
           }
         }
       } else {
-        // -3 PFI for rejection
+        // -3 PFI on rejection
         const { data: proj } = await supabase
           .from("projects").select("freelancer_id").eq("id", projectId).single();
         if (proj?.freelancer_id) {
-          const { data: profile } = await supabase
+          const { data: pf } = await supabase
             .from("profiles").select("pfi").eq("id", proj.freelancer_id).single();
-          if (profile) {
+          if (pf) {
             await supabase.from("profiles")
-              .update({ pfi: Math.max(0, (profile.pfi ?? 0) - 3) })
+              .update({ pfi: Math.max(0, (pf.pfi ?? 0) - 3) })
               .eq("id", proj.freelancer_id);
           }
         }
@@ -197,9 +166,8 @@ export default function MilestoneSubmitPage() {
 
       setEvaluation(eval_result);
       setSubmitted(true);
-
       if (eval_result.approved) {
-        setTimeout(() => router.push(`/projects/${projectId}`), 5000);
+        setTimeout(() => router.push(`/projects/${projectId}`), 4000);
       }
 
     } catch (err: unknown) {
@@ -218,7 +186,8 @@ export default function MilestoneSubmitPage() {
   if (!milestone) return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="text-center">
-        <p className="text-lg font-bold text-slate-900 mb-4">Milestone not found</p>
+        <p className="text-lg font-bold mb-4" style={{ color: "var(--text-1)" }}>Milestone not found</p>
+        <p className="text-sm mb-4" style={{ color: "var(--text-3)" }}>milestoneId: {milestoneId || "undefined — folder name bug!"}</p>
         <button onClick={() => router.push(`/projects/${projectId}`)}
           className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white">
           ← Back to Project
@@ -228,68 +197,75 @@ export default function MilestoneSubmitPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
+    <div className="min-h-screen px-4 py-10" style={{ background: "var(--bg-from)" }}>
       <div className="mx-auto max-w-2xl space-y-5">
 
-        {/* Back */}
         <button onClick={() => router.push(`/projects/${projectId}`)}
-          className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+          className="text-sm transition-opacity hover:opacity-70"
+          style={{ color: "var(--text-2)" }}>
           ← Back to Project
         </button>
 
-        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-1">Submit Work</p>
-          <h1 className="text-2xl font-black text-slate-900">Milestone Submission</h1>
-          <p className="text-sm text-slate-400 mt-1">Your work will be evaluated by Groq AI instantly.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: "var(--accent)" }}>
+            Submit Work
+          </p>
+          <h1 className="text-2xl font-black" style={{ color: "var(--text-1)" }}>Milestone Submission</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
+            Your work will be evaluated by Groq AI instantly.
+          </p>
         </motion.div>
 
         {/* Milestone info */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl bg-white border border-slate-200 p-5">
+          className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Milestone</p>
-              <h2 className="text-base font-black text-slate-900">{milestone.title}</h2>
-              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{milestone.description}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "var(--text-3)" }}>
+                Milestone
+              </p>
+              <h2 className="text-base font-black" style={{ color: "var(--text-1)" }}>{milestone.title}</h2>
+              <p className="text-sm mt-1 leading-relaxed" style={{ color: "var(--text-2)" }}>{milestone.description}</p>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-2xl font-black text-indigo-600">${milestone.amount.toFixed(2)}</p>
-              <p className="text-[10px] text-slate-400">reward</p>
+              <p className="text-2xl font-black" style={{ color: "var(--accent)" }}>${milestone.amount.toFixed(2)}</p>
+              <p className="text-[10px]" style={{ color: "var(--text-3)" }}>reward</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Error */}
         {error && (
-          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-xl border px-4 py-3 text-sm" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#dc2626" }}>
             {error}
             <button onClick={() => setError(null)} className="ml-2 font-bold">×</button>
           </div>
         )}
 
-        {/* Form */}
         <AnimatePresence>
           {!submitted && (
             <motion.div key="form" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }} transition={{ delay: 0.1 }}>
-              <div className="rounded-2xl bg-white border border-slate-200 p-5">
+              <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-2">
-                      Describe your work
-                      <span className="text-red-500 ml-1">*</span>
+                    <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-1)" }}>
+                      Describe your work <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       rows={7}
                       value={submission}
                       onChange={e => { setSubmission(e.target.value); setError(null); }}
                       disabled={submitting}
-                      placeholder={`What did you build?\n\nInclude:\n• What was implemented\n• How it meets the requirements\n• Any links, repos, or deployed URLs`}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm resize-none outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all disabled:opacity-60"
+                      placeholder={"What did you build?\n\nInclude:\n• What was implemented\n• How it meets the requirements\n• Any links, repos, or deployed URLs"}
+                      className="w-full rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all disabled:opacity-60"
+                      style={{
+                        background:   "var(--surface-hover)",
+                        border:       "1px solid var(--border-strong)",
+                        color:        "var(--text-1)",
+                      }}
                     />
-                    <p className="text-xs text-slate-400 text-right mt-1">
+                    <p className="text-xs text-right mt-1" style={{ color: "var(--text-3)" }}>
                       {submission.length} chars
                     </p>
                   </div>
@@ -298,7 +274,8 @@ export default function MilestoneSubmitPage() {
                     type="submit"
                     disabled={submitting}
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-black text-white hover:bg-indigo-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl py-3.5 text-sm font-black text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-2))" }}
                   >
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
@@ -313,7 +290,6 @@ export default function MilestoneSubmitPage() {
           )}
         </AnimatePresence>
 
-        {/* Result */}
         <AnimatePresence>
           {submitted && evaluation && (
             <motion.div key="result"
@@ -322,55 +298,53 @@ export default function MilestoneSubmitPage() {
               transition={{ duration: 0.4 }}
               className="space-y-4">
 
-              {/* Pass / fail banner */}
-              <div className={`rounded-xl px-5 py-4 border ${
-                evaluation.approved
-                  ? "bg-emerald-50 border-emerald-200"
-                  : "bg-amber-50 border-amber-200"
-              }`}>
-                <p className={`text-sm font-black ${evaluation.approved ? "text-emerald-700" : "text-amber-700"}`}>
+              <div className="rounded-xl px-5 py-4 border" style={{
+                background:   evaluation.approved ? "#ecfdf5" : "#fffbeb",
+                borderColor:  evaluation.approved ? "#6ee7b7" : "#fcd34d",
+              }}>
+                <p className="text-sm font-black" style={{ color: evaluation.approved ? "#065f46" : "#92400e" }}>
                   {evaluation.approved
                     ? "Milestone approved — payment released!"
                     : "Needs revision — see feedback below"}
                 </p>
                 {evaluation.approved && (
-                  <p className="text-xs text-emerald-600 mt-0.5">
-                    Redirecting to project in 5 seconds…
+                  <p className="text-xs mt-0.5" style={{ color: "#047857" }}>
+                    Redirecting to project in 4 seconds…
                   </p>
                 )}
               </div>
 
-              {/* Score + feedback */}
-              <div className="rounded-2xl bg-white border border-slate-200 p-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+              <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: "var(--text-3)" }}>
                   AI Evaluation · Groq · Llama 3.3 70B
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 items-start">
                   <ScoreRing score={evaluation.score} />
                   <div className="flex-1 space-y-3">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Feedback</p>
-                      <p className="text-sm text-slate-700 leading-relaxed">{evaluation.feedback}</p>
+                      <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: "var(--text-3)" }}>Feedback</p>
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-1)" }}>{evaluation.feedback}</p>
                     </div>
                     {evaluation.suggestion && (
-                      <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                        <p className="text-xs font-black text-indigo-600 mb-1">Suggestion</p>
-                        <p className="text-sm text-slate-600 leading-relaxed">{evaluation.suggestion}</p>
+                      <div className="rounded-xl p-3" style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
+                        <p className="text-xs font-black mb-1" style={{ color: "var(--accent)" }}>Suggestion</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-2)" }}>{evaluation.suggestion}</p>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3">
                 <button onClick={() => router.push(`/projects/${projectId}`)}
-                  className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-700 hover:border-indigo-300 hover:text-indigo-600 transition-colors">
+                  className="flex-1 rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-70"
+                  style={{ border: "1px solid var(--border)", color: "var(--text-1)", background: "var(--surface)" }}>
                   Back to Project
                 </button>
                 {!evaluation.approved && (
                   <button onClick={() => { setSubmitted(false); setEvaluation(null); setSubmission(""); }}
-                    className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition-colors">
+                    className="flex-1 rounded-xl py-3 text-sm font-bold text-white"
+                    style={{ background: "var(--accent)" }}>
                     Revise & Resubmit
                   </button>
                 )}

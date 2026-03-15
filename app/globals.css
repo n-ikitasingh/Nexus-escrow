@@ -23,6 +23,7 @@
 --glow:     rgba(6,182,212,0.18);
 
   --sidebar-w: 256px;
+  --glass-text-bg: rgba(240, 249, 255, 0.85);
 }
 
 .dark {
@@ -44,6 +45,7 @@
 --accent-2: #67e8f9;
 --accent-3: #2dd4bf;
 --glow:     rgba(34,211,238,0.25);
+  --glass-text-bg: rgba(10, 15, 30, 0.85);
 }
 
 *, *::before, *::after { box-sizing: border-box; }

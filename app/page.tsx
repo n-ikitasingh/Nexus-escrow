@@ -4,34 +4,7 @@
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-
-// ─── Frosted subheading wrapper ───────────────────────────────────────────────
-// Adds a translucent backdrop so grid lines don't bleed through paragraph text
-function GlassText({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`relative inline ${className}`}
-      style={{
-        // Frosted glass pill behind the text — adapts to both light & dark
-        background: "var(--glass-text-bg)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        borderRadius: "6px",
-        padding: "2px 0",
-        // Spread the blur slightly outside the text
-        boxShadow: "0 0 0 6px var(--glass-text-bg)",
-      }}
-    >
-      {children}
-    </span>
-  );
-}
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 function StatCard({ value, label, sub }: { value: string; label: string; sub: string }) {
@@ -158,27 +131,47 @@ export default function LandingPage() {
 
   return (
     <>
-      {/*
-        ─── CSS VARIABLES ──────────────────────────────────────────────────────
-        --glass-text-bg is the key addition:
-          Light mode: semi-opaque white so grid doesn't bleed through text
-          Dark mode:  semi-opaque dark so grid doesn't bleed through text
-      */}
-      <style>{`
-        :root {
-          --glass-text-bg: rgba(240, 249, 255, 0.82);
-        }
-        .dark {
-          --glass-text-bg: rgba(10, 15, 30, 0.82);
-        }
-        @media (prefers-color-scheme: dark) {
-          :root:not([data-theme="light"]) {
-            --glass-text-bg: rgba(10, 15, 30, 0.82);
-          }
-        }
-      `}</style>
-
       <div className="relative min-h-screen overflow-x-hidden" style={{ background: "var(--bg-from)" }}>
+
+        {/* ── TOP NAV ──────────────────────────────────────────────────────── */}
+        <div
+          className="sticky top-0 z-50 flex items-center justify-between px-5 sm:px-8 h-14"
+          style={{
+            background: "var(--surface)",
+            backdropFilter: "blur(16px)",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-lg"
+              style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-3))" }}
+            >
+              <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+                <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" fill="white" fillOpacity="0.9"/>
+                <path d="M8 5L11 6.75V10.25L8 12L5 10.25V6.75L8 5Z" fill="white" fillOpacity="0.45"/>
+              </svg>
+            </div>
+            <span className="font-black text-sm tracking-tight" style={{ color: "var(--text-1)" }}>Nexus</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link href="/login">
+              <span className="hidden sm:inline text-xs font-semibold transition-opacity hover:opacity-70" style={{ color: "var(--text-2)" }}>
+                Sign in
+              </span>
+            </Link>
+            <Link href="/signup">
+              <motion.button
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                className="rounded-lg px-4 py-1.5 text-xs font-bold text-white"
+                style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-2))" }}
+              >
+                Get started
+              </motion.button>
+            </Link>
+          </div>
+        </div>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
         <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
@@ -251,20 +244,11 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-2xl mb-10"
             >
-              <div
-                className="inline-block rounded-2xl px-5 py-4 text-lg sm:text-xl leading-relaxed font-medium"
-                style={{
-                  background: "var(--glass-text-bg)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  color: "var(--text-1)",
-                  border: "1px solid var(--border)",
-                }}
-              >
+              <p className="text-lg sm:text-xl leading-relaxed font-medium" style={{ color: "var(--text-2)" }}>
                 Nexus eliminates payment disputes and project chaos. Our autonomous AI
                 generates milestones, holds funds in escrow, evaluates submissions, and
                 releases payments — with zero human bias.
-              </div>
+              </p>
             </motion.div>
 
             {/* CTAs */}
@@ -359,21 +343,9 @@ export default function LandingPage() {
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-5" style={{ color: "var(--text-1)" }}>
                 Every layer is autonomous.
               </h2>
-              {/* Frosted subheading */}
-              <div className="flex justify-center">
-                <div
-                  className="inline-block rounded-xl px-4 py-2.5 text-base max-w-xl font-medium leading-relaxed"
-                  style={{
-                    background: "var(--glass-text-bg)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    color: "var(--text-2)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  Four integrated systems that remove humans from the payment loop — without removing accountability.
-                </div>
-              </div>
+              <p className="text-base max-w-xl mx-auto leading-relaxed" style={{ color: "var(--text-2)" }}>
+                Four integrated systems that remove humans from the payment loop — without removing accountability.
+              </p>
             </motion.div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -421,20 +393,10 @@ export default function LandingPage() {
                 <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-4" style={{ color: "var(--text-1)" }}>
                   Five steps.<br />Zero disputes.
                 </h2>
-                {/* Frosted subheading */}
-                <div
-                  className="inline-block rounded-xl px-4 py-3 text-sm leading-relaxed font-medium mb-8"
-                  style={{
-                    background: "var(--glass-text-bg)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    color: "var(--text-2)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
+                <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--text-2)" }}>
                   From rough idea to final payment — the entire lifecycle is managed by the AI agent.
                   No email chains. No "I thought you meant…" No waiting.
-                </div>
+                </p>
 
                 {/* PFI leaderboard */}
                 <div
@@ -477,21 +439,9 @@ export default function LandingPage() {
               <h2 className="text-3xl font-black tracking-tight mb-4" style={{ color: "var(--text-1)" }}>
                 Built for both sides of the table.
               </h2>
-              {/* Frosted subheading */}
-              <div className="flex justify-center">
-                <div
-                  className="inline-block rounded-xl px-4 py-2 text-sm font-medium"
-                  style={{
-                    background: "var(--glass-text-bg)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    color: "var(--text-2)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  Whether you're hiring or delivering, Nexus has your back.
-                </div>
-              </div>
+              <p className="text-sm" style={{ color: "var(--text-2)" }}>
+                Whether you're hiring or delivering, Nexus has your back.
+              </p>
             </motion.div>
 
             <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
@@ -560,21 +510,9 @@ export default function LandingPage() {
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-5" style={{ color: "var(--text-1)" }}>
                 Ready to work without friction?
               </h2>
-              {/* Frosted subheading */}
-              <div className="flex justify-center mb-8">
-                <div
-                  className="inline-block rounded-xl px-5 py-3 text-base font-medium"
-                  style={{
-                    background: "var(--glass-text-bg)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    color: "var(--text-2)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  Join Nexus and experience the first truly autonomous freelance payment system.
-                </div>
-              </div>
+              <p className="text-base mb-8" style={{ color: "var(--text-2)" }}>
+                Join Nexus and experience the first truly autonomous freelance payment system.
+              </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link href="/signup">
                   <motion.button
