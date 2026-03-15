@@ -111,9 +111,19 @@ export default function ProjectDetailPage() {
     setActionLoading("fund");
     setError(null);
     try {
-      const res  = await fetch(`/api/projects/${projectId}/fund`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to fund project");
+      if (!project || !user) throw new Error("Not ready");
+      const { error: updateErr } = await supabase
+        .from("projects")
+        .update({ escrow_balance: project.total_budget, status: "open" })
+        .eq("id", projectId)
+        .eq("employer_id", user.id);
+      if (updateErr) throw new Error(updateErr.message);
+      await supabase.from("transactions").insert({
+        project_id: Number(projectId),
+        amount:     project.total_budget,
+        type:       "deposit",
+        status:     "completed",
+      });
       await loadProject();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -128,9 +138,14 @@ export default function ProjectDetailPage() {
     setActionLoading("accept");
     setError(null);
     try {
-      const res  = await fetch(`/api/projects/${projectId}/accept`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to accept project");
+      if (!project || !user) throw new Error("Not ready");
+      const { error: updateErr } = await supabase
+        .from("projects")
+        .update({ freelancer_id: user.id, status: "in_progress" })
+        .eq("id", projectId)
+        .is("freelancer_id", null)
+        .eq("status", "open");
+      if (updateErr) throw new Error(updateErr.message);
       await loadProject();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
