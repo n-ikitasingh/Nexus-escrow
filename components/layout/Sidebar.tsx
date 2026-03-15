@@ -358,8 +358,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={onClose}
-              className="fixed inset-0 z-30 lg:hidden"
-              style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(2px)" }}
+              className="fixed inset-0 z-[60] lg:hidden"
+              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
             />
             <motion.aside
               key="mobile-sidebar"
@@ -367,7 +367,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 380, damping: 35 }}
-              className="fixed top-0 left-0 z-40 h-full flex flex-col w-[240px] lg:hidden"
+              className="fixed top-0 left-0 z-[70] h-full flex flex-col w-full sm:w-72 lg:hidden"
               style={{ borderRight: "1px solid var(--border)", background: "var(--surface)" }}
             >
               <SidebarInner onClose={onClose} />
