@@ -1,23 +1,34 @@
-# Nexus — AI-Powered Freelance Escrow Platform
 
-🌐 Live Demo: [https://nexus-escrow.netlify.app/](https://nexus-escrow.netlify.app/)
+# Nexus-Escrow
+### AI-Powered Freelance Escrow & Intelligent Workflow Automation Platform
 
-> Autonomous milestone generation, AI-based work evaluation, escrow-backed payments, and reputation scoring — built for modern freelance workflows.
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![React](https://img.shields.io/badge/React-TypeScript-blue)
+![Supabase](https://img.shields.io/badge/Backend-Supabase-green)
+![LLM](https://img.shields.io/badge/AI-Llama3-orange)
+![Deployment](https://img.shields.io/badge/Deployment-Netlify-success)
+
+🌐 **Live Demo:** https://nexus-escrow.netlify.app/
+
+> Autonomous milestone generation, AI-driven work evaluation, escrow-backed workflows, and intelligent reputation scoring for modern freelance ecosystems.
 
 ---
 
 # Overview
 
-Nexus is a full-stack AI-powered freelance escrow platform designed to reduce payment disputes, unclear project scopes, and manual verification overhead in remote work environments.
+Nexus-Escrow is a full-stack AI-powered freelance escrow platform designed to reduce payment disputes, unclear project scopes, and manual verification overhead in remote work environments.
 
-The platform uses LLM-driven workflows to:
+The platform introduces an intelligent mediation layer between employers and freelancers using LLM-powered workflow automation.
 
-* Convert project briefs into structured milestones
-* Evaluate submitted work automatically
-* Release escrow payments based on completion quality
-* Maintain a dynamic reputation scoring system for freelancers
+The system leverages AI to:
 
-The system combines AI automation, secure workflow management, and modern UI/UX to simulate an intelligent project mediation layer between employers and freelancers.
+- Convert project briefs into structured milestones
+- Evaluate submitted work automatically
+- Simulate escrow-backed payment release
+- Maintain adaptive freelancer reputation scoring
+- Streamline project lifecycle management
+
+The architecture combines AI orchestration, secure workflow management, and modern dashboard-based UI/UX for scalable freelance operations.
 
 ---
 
@@ -25,69 +36,100 @@ The system combines AI automation, secure workflow management, and modern UI/UX 
 
 ## AI Milestone Generation
 
-Generate structured deliverables, timelines, and acceptance criteria from natural-language project briefs.
+Natural-language project briefs are transformed into structured deliverables, timelines, and acceptance criteria using LLM-driven workflows.
+
+---
 
 ## Escrow-Based Payment Workflow
 
-Project funds remain locked until milestone validation is completed.
+Project funds remain secured until milestone validation and quality evaluation are completed.
+
+---
 
 ## AI Submission Evaluation
 
-Integrated LLM evaluation pipeline reviews freelancer submissions and generates:
+Integrated LLM evaluation pipelines analyze freelancer submissions and generate:
 
-* Completion assessment
-* Quality feedback
-* Payment decision recommendations
+- Completion assessment
+- Quality feedback
+- Payment recommendations
+- Validation summaries
+
+---
 
 ## Professional Fidelity Index (PFI)
 
-Custom reputation scoring system based on:
+Custom reputation scoring framework based on:
 
-* Submission quality
-* Delivery consistency
-* Completion accuracy
-* Turnaround efficiency
+- Submission quality
+- Delivery consistency
+- Completion accuracy
+- Turnaround efficiency
+
+The scoring system dynamically adapts to freelancer performance history.
+
+---
 
 ## Role-Based Dashboards
 
-Separate interfaces for:
+Dedicated interfaces for:
 
-* Employers
-* Freelancers
+- Employers
+- Freelancers
 
-with real-time project tracking and milestone management.
+with:
+
+- Real-time project tracking
+- Milestone management
+- Submission monitoring
+- Payment workflow visualization
+
+---
 
 ## Responsive Modern UI
 
-* Dark mode support
-* Fully responsive layout
-* Smooth animations and transitions
-* Optimized for desktop and mobile
+- Dark mode support
+- Fully responsive layouts
+- Smooth animations
+- Dashboard-focused UX
+- Mobile and desktop optimization
 
 ---
 
 # Tech Stack
 
-| Category       | Technologies                  |
-| -------------- | ----------------------------- |
-| Frontend       | Next.js 15, React, TypeScript |
-| Styling        | Tailwind CSS, Framer Motion   |
-| Backend        | Supabase, PostgreSQL          |
-| Authentication | Supabase Auth                 |
-| AI Integration | Groq API, Llama 3             |
-| Deployment     | Netlify                       |
+| Category | Technologies |
+|---|---|
+| Frontend | Next.js 15, React, TypeScript |
+| Styling | Tailwind CSS, Framer Motion |
+| Backend | Supabase, PostgreSQL |
+| Authentication | Supabase Auth |
+| AI Integration | Groq API, Llama 3 |
+| Deployment | Netlify |
 
 ---
 
 # System Workflow
 
-1. Employer creates a project brief
-2. AI generates milestones automatically
-3. Employer funds escrow vault
-4. Freelancer submits milestone work
+1. Employer submits project brief
+2. AI generates structured milestones
+3. Employer funds escrow workflow
+4. Freelancer submits milestone deliverables
 5. AI evaluates submission quality
-6. Payment is released automatically based on evaluation
+6. Escrow payment recommendation is generated
 7. Reputation score updates dynamically
+
+---
+
+# Architecture Highlights
+
+- AI-powered workflow orchestration
+- Modular full-stack architecture
+- LLM-assisted evaluation pipelines
+- Escrow-inspired transaction management
+- Real-time dashboard interactions
+- Scalable component-based system design
+- Production-style authentication workflows
 
 ---
 
@@ -98,13 +140,17 @@ with real-time project tracking and milestone management.
 ```bash
 git clone https://github.com/n-ikitasingh/Nexus-escrow.git
 cd Nexus-escrow
-```
+````
+
+---
 
 ## Install Dependencies
 
 ```bash
 npm install
 ```
+
+---
 
 ## Environment Variables
 
@@ -115,9 +161,10 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 GROQ_API_KEY=your_groq_api_key
 ```
+
 ---
 
-## Folder Structure
+# Folder Structure
 
 ```txt
 app/
@@ -127,7 +174,8 @@ public/
 ```
 
 ---
-## Start Development Server
+
+# Start Development Server
 
 ```bash
 npm run dev
@@ -141,25 +189,24 @@ http://localhost:3000
 
 ---
 
-# Project Highlights
+# Applications
 
-* AI-driven workflow automation
-* LLM-based quality evaluation system
-* Full-stack architecture with authentication and database integration
-* Escrow-inspired transactional workflow simulation
-* Clean responsive UI with production-style dashboard design
-* Modular component architecture using Next.js App Router
+* AI-powered freelance management
+* Escrow workflow automation
+* Intelligent project mediation systems
+* LLM-assisted workflow evaluation
+* Reputation-based freelance ecosystems
+* Smart milestone management
 
 ---
 
 # Future Improvements
 
 * Blockchain-backed escrow integration
-* Multi-agent evaluation system
-* Real-time collaboration tools
+* Multi-agent evaluation systems
 * Smart contract automation
-* Advanced analytics dashboard
+* Real-time collaboration tools
 * AI negotiation assistant
-
+* Advanced analytics dashboards
 
 
